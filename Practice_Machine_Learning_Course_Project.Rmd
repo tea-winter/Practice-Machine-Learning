@@ -1,0 +1,83 @@
+---
+title: "Practice Machine Learning Course Project"
+author: "Tham Nguyen"
+date: "7/5/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Executive Summary:
+
+This document is the final report of the Peer Assessment project from the Practical Machine Learning course, which is a part of the Data Science Specialization. We will buiding a model for predict the test data (20 case).
+
+## Getting data
+we call all the package need for predict project.
+
+```{r ggplot2 readr dplyr caret randomForest}
+library(ggplot2)
+library(readr)
+library(dplyr)
+library(caret)
+library(randomForest)
+```
+
+Read data all data: train and test data
+```{r}
+train <- read.csv("./data/pml-training.csv")
+test <- read.csv("./data/pml-testing.csv")
+```
+
+We spend awhile to look at the data
+```{r train test}
+dim(train)
+dim(test)
+```
+
+## cleaning data
+We will clean all the dataset with resmove some columns.
+
+```{r}
+train <- train[, colSums(is.na(train)) == 0] 
+test <- test[, colSums(is.na(test)) == 0]
+removecols <- nearZeroVar(train)
+train <- train[, -removecols]
+```
+
+## Data Partitioning
+subset data traning to 2 part : traning set - train.sub and testing set - test.sub
+
+```{r 12345 train intrain}
+set.seed(12345) 
+intrain <- createDataPartition(train$classe, p=0.75, list=F)
+train.sub <- train[intrain, ]
+test.sub <- train[-intrain, ]
+```
+
+## Data Prediction and Modelling
+```{r pred_model}
+setting <- trainControl(method="cv", 5)
+pred_model <- train(classe ~ ., data=train.sub, method="rf", trControl=setting)
+pred_model
+```
+Personally, I am using the  **Random Forest** method in this project course with 5 folds.
+According to the result, we can see the result arrange in 5 classes is really good. Let check the Error following to know how this model perform in test data(test.sub). 
+(in the limited of this report i just use 1 method but I think result model still good for this data set)
+
+## Cross Validation Testing and Error Estimate
+```{r test.sub$classe pred_test}
+pred_test <- predict(pred_model, test.sub)
+confusionMatrix(test.sub$classe, pred_test)
+```
+We using pred_model is a predict model for the test.sub data and compare predict result with accuracy data.
+As the result, we can see that the R-square is **100%** and the P-Value is **2.2e-16** it show that this model is evaluating for dataset.
+
+## Application model on test data
+
+```{r classe}
+classe <- predict(pred_model, test)
+classe
+```
+we use predict model above on the test data to have result of 20 cases that is required in this course project.
